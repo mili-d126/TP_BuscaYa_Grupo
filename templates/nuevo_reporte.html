@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuevo Reporte - BuscaYa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <style>#mapaForm { height: 320px; border-radius: .75rem; }</style>
+</head>
+<body style="background-color: #f1f8e9;">
+    {% include '_navbar.html' %}
+
+    <div class="container mb-5">
+        <div class="row justify-content-center">
+            <div class="col-md-10 col-lg-8">
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% for category, message in messages %}
+                    <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} text-center p-2 small mb-3" role="alert">
+                      <strong>{{ message }}</strong>
+                    </div>
+                  {% endfor %}
+                {% endwith %}
+
+                <div class="card shadow border-0 rounded-4">
+                    <div class="card-header bg-white border-0 pt-4 px-4">
+                        <h5 class="fw-bold mb-0 text-success">Reportar un objeto</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <form action="/reportes/nuevo" method="POST" enctype="multipart/form-data" id="formReporte">
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted">¿Qué pasó?</label>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="tipo" id="tipoPerdido" value="perdido" {{ 'checked' if datos.get('tipo', 'perdido') == 'perdido' }}>
+                                    <label class="btn btn-outline-danger" for="tipoPerdido">Perdí algo</label>
+                                    <input type="radio" class="btn-check" name="tipo" id="tipoEncontrado" value="encontrado" {{ 'checked' if datos.get('tipo') == 'encontrado' }}>
+                                    <label class="btn btn-outline-success" for="tipoEncontrado">Encontré algo</label>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-7 mb-3">
+                                    <label class="form-label text-muted">Nombre del objeto</label>
+                                    <input type="text" name="titulo" class="form-control border-success-subtle" placeholder="Mochila azul con llavero" value="{{ datos.get('titulo', '') }}" maxlength="100" required>
+                                </div>
+                                <div class="col-md-5 mb-3">
+                                    <label class="form-label text-muted">Categoría</label>
+                                    <select name="categoria" class="form-select border-success-subtle">
+                                        {% for c in categorias %}<option value="{{ c }}" {{ 'selected' if datos.get('categoria') == c }}>{{ c }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Descripción</label>
+                                <textarea name="descripcion" rows="3" class="form-control border-success-subtle" placeholder="Color, marca, señas particulares…">{{ datos.get('descripcion', '') }}</textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted">Fecha</label>
+                                    <input type="date" name="fecha" class="form-control border-success-subtle" value="{{ datos.get('fecha', hoy) }}" max="{{ hoy }}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted">Foto (opcional)</label>
+                                    <input type="file" name="foto" class="form-control border-success-subtle" accept="image/png,image/jpeg,image/webp">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Lugar de referencia</label>
+                                <input type="text" name="lugar" class="form-control border-success-subtle" placeholder="Biblioteca, segundo piso" value="{{ datos.get('lugar', '') }}" maxlength="120">
+                            </div>
+
+                            <div class="mb-2 d-flex justify-content-between align-items-center">
+                                <label class="form-label text-muted mb-0">Ubicación en el mapa</label>
+                                <button type="button" id="btnUbicacion" class="btn btn-outline-success btn-sm">Usar mi ubicación</button>
+                            </div>
+                            <div id="mapaForm"></div>
+                            <div class="form-text mb-3" id="ayudaMapa">Toca el mapa para marcar dónde lo perdiste o lo encontraste. Puedes arrastrar el marcador.</div>
+
+                            <input type="hidden" name="latitud" id="latitud" value="{{ datos.get('latitud', '') }}">
+                            <input type="hidden" name="longitud" id="longitud" value="{{ datos.get('longitud', '') }}">
+
+                            <button type="submit" class="btn btn-success w-100">Publicar reporte</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const CENTRO_INICIAL = [-25.2637, -57.5759]; // Asunción. Cámbialo por tu universidad.
+        const latInput = document.getElementById('latitud');
+        const lngInput = document.getElementById('longitud');
+        const ayuda = document.getElementById('ayudaMapa');
+
+        const mapa = L.map('mapaForm').setView(CENTRO_INICIAL, 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19, attribution: '&copy; OpenStreetMap'
+        }).addTo(mapa);
+
+        let marcador = null;
+
+        function colocar(lat, lng) {
+            if (!marcador) {
+                marcador = L.marker([lat, lng], { draggable: true }).addTo(mapa);
+                marcador.on('dragend', () => {
+                    const p = marcador.getLatLng();
+                    guardar(p.lat, p.lng);
+                });
+            } else {
+                marcador.setLatLng([lat, lng]);
+            }
+            guardar(lat, lng);
+        }
+
+        function guardar(lat, lng) {
+            latInput.value = lat.toFixed(6);
+            lngInput.value = lng.toFixed(6);
+            ayuda.textContent = `Ubicación marcada (${lat.toFixed(5)}, ${lng.toFixed(5)}).`;
+            ayuda.classList.remove('text-danger');
+        }
+
+        mapa.on('click', e => colocar(e.latlng.lat, e.latlng.lng));
+
+        // Si el formulario volvió con errores, recupera el marcador
+        if (latInput.value && lngInput.value) {
+            const lat = parseFloat(latInput.value), lng = parseFloat(lngInput.value);
+            colocar(lat, lng);
+            mapa.setView([lat, lng], 16);
+        }
+
+        document.getElementById('btnUbicacion').addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                ayuda.textContent = 'Tu navegador no permite obtener la ubicación. Márcala en el mapa.';
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    colocar(pos.coords.latitude, pos.coords.longitude);
+                    mapa.setView([pos.coords.latitude, pos.coords.longitude], 17);
+                },
+                () => { ayuda.textContent = 'No pudimos obtener tu ubicación. Márcala en el mapa.'; }
+            );
+        });
+
+        document.getElementById('formReporte').addEventListener('submit', e => {
+            if (!latInput.value || !lngInput.value) {
+                e.preventDefault();
+                ayuda.textContent = 'Marca la ubicación en el mapa antes de publicar.';
+                ayuda.classList.add('text-danger');
+                document.getElementById('mapaForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    </script>
+</body>
+</html>

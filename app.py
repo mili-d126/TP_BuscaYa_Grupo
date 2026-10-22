@@ -1,9 +1,12 @@
 import os
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+from reportes import reportes_bp, init_reportes_db
 
 app = Flask(__name__)
 app.secret_key = "clave_secreta_buscaya"
+app.register_blueprint(reportes_bp)
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # fotos de hasta 5 MB
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE_PATH = os.path.join(BASE_DIR, "database.db")
@@ -165,5 +168,6 @@ def cambiar_contrasena():
     return redirect(url_for('perfil'))
 
 if __name__ == '__main__':
-    init_db()  
+    init_db()
+    init_reportes_db()   # ← agregar esta línea
     app.run(debug=True)
