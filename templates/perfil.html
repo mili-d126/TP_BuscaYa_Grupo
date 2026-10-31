@@ -30,11 +30,11 @@
                     <div class="card-body p-4 text-center">
                         <div class="mb-3">
                             <span class="fs-1 bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                                {{ usuario[0][0] }}
+                                {{ usuario['nombre'][0] if usuario['nombre'] else '?' }}
                             </span>
                         </div>
-                        <h3 class="card-title fw-bold text-dark">{{ usuario[0] }}</h3>
-                        <p class="text-muted mb-3">{{ usuario[1] }}</p>
+                        <h3 class="card-title fw-bold text-dark">{{ usuario['nombre'] }}</h3>
+                        <p class="text-muted mb-3">{{ usuario['email'] }}</p>
                         <span class="badge bg-success px-3 py-2">Usuario Activo</span>
                     </div>
                 </div>
@@ -59,7 +59,7 @@
                         <form action="/perfil" method="POST">
                             <div class="mb-3">
                                 <label class="form-label text-muted">Número de Teléfono</label>
-                                <input type="text" name="telefono" class="form-control border-success-subtle" value="{{ usuario[2] if usuario[2] else '' }}" placeholder="+595 981 123456">
+                                <input type="text" name="telefono" class="form-control border-success-subtle" value="{{ usuario['telefono'] or '' }}" placeholder="+595 981 123456">
                                 <div class="form-text">Añade tu teléfono para que te contacten si encuentran un objeto tuyo.</div>
                             </div>
                             <button type="submit" class="btn btn-success w-100">Guardar Cambios</button>

@@ -61,7 +61,7 @@
             <div class="col-12 col-md-6 col-lg-4">
                 <div class="card report-card shadow border-0 rounded-4 h-100 overflow-hidden">
                     {% if r['foto'] %}
-                        <img src="{{ url_for('static', filename='uploads/' ~ r['foto']) }}" class="card-img-top" alt="{{ r['titulo'] }}" style="height: 180px; object-fit: cover;">
+                        <img src="{{ r['foto'] }}" class="card-img-top" alt="{{ r['titulo'] }}" style="height: 180px; object-fit: cover;">
                     {% else %}
                         <div class="report-placeholder">📦</div>
                     {% endif %}
