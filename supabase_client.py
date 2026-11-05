@@ -95,10 +95,12 @@ def save_auth_session(auth_response):
         )
 
 
-def sign_up(email, password, name):
+def sign_up(email, password, name, redirect_to=None):
+    params = {"redirect_to": redirect_to} if redirect_to else None
     response = _request(
         "auth/v1/signup",
         method="POST",
+        params=params,
         payload={"email": email, "password": password, "data": {"nombre": name}},
     )
     if response.get("access_token"):
@@ -115,6 +117,15 @@ def sign_in(email, password):
     )
     save_auth_session(response)
     return response
+
+
+def reset_password_for_email(email, redirect_to):
+    return _request(
+        "auth/v1/recover",
+        method="POST",
+        params={"redirect_to": redirect_to},
+        payload={"email": email},
+    )
 
 
 def _access_token():

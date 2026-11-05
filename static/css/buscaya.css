@@ -371,6 +371,42 @@ textarea.form-control {
     text-decoration: underline;
 }
 
+.confirmation-content {
+    width: 100%;
+    max-width: 410px;
+}
+
+.confirmation-content h2 {
+    margin: 0.45rem 0 0.7rem;
+    color: var(--by-forest);
+    font-size: clamp(1.8rem, 3vw, 2.3rem);
+    font-weight: 750;
+}
+
+.confirmation-content .btn {
+    min-height: 3.2rem;
+}
+
+.confirmation-icon {
+    display: grid;
+    width: 4.25rem;
+    height: 4.25rem;
+    margin-bottom: 1.5rem;
+    place-items: center;
+    color: var(--by-forest);
+    background: #e8f4dc;
+    border: 1px solid #d5e9c2;
+    border-radius: 1.25rem;
+    font-size: 2rem;
+    font-weight: 750;
+}
+
+.confirmation-icon-error {
+    color: #8d3e35;
+    background: #fff0ed;
+    border-color: #f3d4ce;
+}
+
 @media (max-width: 767.98px) {
     .navbar {
         padding: 0.65rem 0;

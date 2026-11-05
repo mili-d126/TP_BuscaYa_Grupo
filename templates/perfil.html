@@ -76,11 +76,15 @@
                         <form action="/perfil/cambiar_contrasena" method="POST">
                             <div class="mb-3">
                                 <label class="form-label text-muted">Contraseña Actual</label>
-                                <input type="password" name="contrasena_actual" class="form-control border-success-subtle" placeholder="••••••••" required>
+                                <input type="password" name="contrasena_actual" class="form-control border-success-subtle" placeholder="••••••••" autocomplete="current-password" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label text-muted">Nueva Contraseña</label>
-                                <input type="password" name="nueva_contrasena" class="form-control border-success-subtle" placeholder="Mínimo 6 caracteres" required>
+                                <input type="password" name="nueva_contrasena" class="form-control border-success-subtle" placeholder="Mínimo 6 caracteres" minlength="6" autocomplete="new-password" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Confirmar Nueva Contraseña</label>
+                                <input type="password" name="confirmar_contrasena" class="form-control border-success-subtle" placeholder="Repite la nueva contraseña" minlength="6" autocomplete="new-password" required>
                             </div>
                             <button type="submit" class="btn btn-outline-success w-100">Actualizar Contraseña</button>
                         </form>
