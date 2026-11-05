@@ -9,6 +9,7 @@ from supabase_client import (
     SupabaseError,
     save_auth_session,
     select,
+    reset_password_for_email,
     sign_in,
     sign_up,
     update,
@@ -42,6 +43,16 @@ def home():
     return redirect(url_for("login"))
 
 
+@app.route("/confirmacion")
+def confirmacion():
+    confirmation_error = any(
+        request.args.get(key) for key in ("error", "error_code", "error_description")
+    )
+    return render_template(
+        "confirmacion.html", confirmation_error=confirmation_error
+    )
+
+
 @app.route("/registro", methods=["GET", "POST"])
 def registro():
     if request.method == "POST":
@@ -50,11 +61,22 @@ def registro():
         contrasena = request.form["contrasena"]
 
         try:
-            response = sign_up(email, contrasena, nombre)
+            response = sign_up(
+                email,
+                contrasena,
+                nombre,
+                url_for("confirmacion", _external=True),
+            )
         except SupabaseError as error:
             if error.status in (400, 422):
                 flash("El correo electrónico ya se encuentra registrado o no es válido.", "danger")
                 return render_template("registro.html")
+            if error.status == 429:
+                flash(
+                    "Se alcanzó el límite de correos de registro. Espera un poco antes de volver a intentarlo.",
+                    "danger",
+                )
+                return render_template("registro.html"), 429
             raise
 
         if response.get("access_token"):
@@ -85,6 +107,70 @@ def login():
         return redirect(url_for("perfil"))
 
     return render_template("login.html")
+
+
+@app.route("/recuperar-contrasena", methods=["GET", "POST"])
+def recuperar_contrasena():
+    if request.method == "POST":
+        email = request.form["email"].strip().lower()
+        try:
+            reset_password_for_email(
+                email, url_for("restablecer_contrasena", _external=True)
+            )
+        except SupabaseError as error:
+            if error.status == 429:
+                flash("Demasiados intentos. Espera un momento antes de volver a intentarlo.", "danger")
+                return render_template("recuperar_contrasena.html"), 429
+            raise
+
+        flash(
+            "Si existe una cuenta con ese correo, recibirás un enlace para cambiar tu contraseña.",
+            "success",
+        )
+        return redirect(url_for("recuperar_contrasena"))
+
+    return render_template("recuperar_contrasena.html")
+
+
+@app.route("/restablecer-contrasena", methods=["GET", "POST"])
+def restablecer_contrasena():
+    if request.method == "GET":
+        return render_template("restablecer_contrasena.html")
+
+    access_token = request.form.get("access_token", "").strip()
+    nueva_contrasena = request.form.get("nueva_contrasena", "")
+    confirmar_contrasena = request.form.get("confirmar_contrasena", "")
+
+    if not access_token:
+        return render_template(
+            "restablecer_contrasena.html",
+            reset_error="El enlace no es válido. Solicita uno nuevo.",
+        ), 400
+    if len(nueva_contrasena) < 6:
+        return render_template(
+            "restablecer_contrasena.html",
+            access_token=access_token,
+            reset_error="La contraseña debe tener al menos 6 caracteres.",
+        ), 400
+    if nueva_contrasena != confirmar_contrasena:
+        return render_template(
+            "restablecer_contrasena.html",
+            access_token=access_token,
+            reset_error="Las contraseñas no coinciden.",
+        ), 400
+
+    try:
+        update_password(nueva_contrasena, access_token)
+    except SupabaseError as error:
+        if error.status in (400, 401, 422):
+            return render_template(
+                "restablecer_contrasena.html",
+                reset_error="El enlace venció o ya fue utilizado. Solicita uno nuevo.",
+            ), 400
+        raise
+
+    flash("Tu contraseña se actualizó. Ya puedes iniciar sesión.", "success")
+    return redirect(url_for("login"))
 
 
 @app.route("/logout")
@@ -130,6 +216,14 @@ def cambiar_contrasena():
 
     contrasena_actual = request.form["contrasena_actual"]
     nueva_contrasena = request.form["nueva_contrasena"]
+    confirmar_contrasena = request.form["confirmar_contrasena"]
+
+    if len(nueva_contrasena) < 6:
+        flash("La nueva contraseña debe tener al menos 6 caracteres.", "danger")
+        return redirect(url_for("perfil"))
+    if nueva_contrasena != confirmar_contrasena:
+        flash("Las contraseñas nuevas no coinciden.", "danger")
+        return redirect(url_for("perfil"))
 
     try:
         verified_session = sign_in(session["email"], contrasena_actual)
@@ -139,7 +233,13 @@ def cambiar_contrasena():
             return redirect(url_for("perfil"))
         raise
 
-    update_password(nueva_contrasena, verified_session["access_token"])
+    try:
+        update_password(nueva_contrasena, verified_session["access_token"])
+    except SupabaseError as error:
+        if error.status in (400, 422):
+            flash("No se pudo actualizar la contraseña. Verifica que cumpla los requisitos.", "danger")
+            return redirect(url_for("perfil"))
+        raise
     flash("¡Contraseña actualizada con éxito!", "success")
     return redirect(url_for("perfil"))
 
