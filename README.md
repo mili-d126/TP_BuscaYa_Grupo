@@ -4,6 +4,7 @@
 
 1. In the Supabase dashboard, open **SQL Editor**, paste in `supabase/schema.sql`, and run it. This creates the profile and report tables, authentication triggers, row-level security policies, and the public `report-photos` storage bucket.
 2. Copy `.env.example` to `.env`. Set `FLASK_SECRET_KEY` to a random secret; the Supabase URL and publishable key are already filled in. The publishable key is intended for client applications; never use a Supabase secret/service-role key in this app.
+(If .env File is included, this step can be skiped.)
 3. Install the Python dependencies and start Flask:
 
    ```sh
