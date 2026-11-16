@@ -193,6 +193,15 @@ def update(table, params, values):
     )
 
 
+def rpc(function_name, params):
+    return _request(
+        f"rest/v1/rpc/{function_name}",
+        method="POST",
+        payload=params,
+        access_token=_access_token(),
+    )
+
+
 def delete(table, params):
     return _request(
         f"rest/v1/{table}",
