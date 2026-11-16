@@ -3,6 +3,7 @@ import os
 from flask import Flask, flash, redirect, render_template, request, session, url_for
 from dotenv import load_dotenv
 
+from admin import admin_bp
 from reportes import reportes_bp
 from supabase_client import (
     SessionExpiredError,
@@ -26,6 +27,7 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = os.getenv("FLASK_DEBUG") != "1"
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
+app.register_blueprint(admin_bp)
 app.register_blueprint(reportes_bp)
 
 

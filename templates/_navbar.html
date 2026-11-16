@@ -10,6 +10,9 @@
                 <li class="nav-item"><a class="nav-link" href="/reportes">Reportes</a></li>
                 <li class="nav-item"><a class="nav-link" href="/reportes?mios=1">Mis reportes</a></li>
                 <li class="nav-item"><a class="nav-link" href="/perfil">Mi perfil</a></li>
+                {% if es_administrador %}
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.dashboard') }}">Administración</a></li>
+                {% endif %}
             </ul>
             <a href="/reportes/nuevo" class="btn btn-light btn-sm fw-bold me-2">+ Nuevo reporte</a>
             <a href="/logout" class="btn btn-outline-light btn-sm">Cerrar Sesión</a>

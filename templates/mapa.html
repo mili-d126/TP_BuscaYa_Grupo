@@ -45,7 +45,7 @@
                     <div class="col-6 col-md-3">
                         <select id="filtroCategoria" class="form-select border-success-subtle">
                             <option value="">Todas las categorías</option>
-                            {% for c in categorias %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+                            {% for c in categorias %}<option value="{{ c['codigo'] }}">{{ c['nombre'] }}</option>{% endfor %}
                         </select>
                     </div>
                 </div>

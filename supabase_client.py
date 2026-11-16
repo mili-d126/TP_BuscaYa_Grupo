@@ -2,7 +2,7 @@ import json
 import os
 import time
 from urllib.error import HTTPError
-from urllib.parse import quote, urlencode, urlparse
+from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 from dotenv import load_dotenv
@@ -193,6 +193,15 @@ def update(table, params, values):
     )
 
 
+def rpc(function_name, params):
+    return _request(
+        f"rest/v1/rpc/{function_name}",
+        method="POST",
+        payload=params,
+        access_token=_access_token(),
+    )
+
+
 def delete(table, params):
     return _request(
         f"rest/v1/{table}",
@@ -213,18 +222,15 @@ def upload_report_photo(object_path, content, content_type):
         access_token=_access_token(),
         extra_headers={"x-upsert": "false"},
     )
+
+
+def report_photo_url(object_path):
     base_url, _ = _configuration()
+    encoded_path = quote(object_path, safe="/")
     return f"{base_url}/storage/v1/object/public/report-photos/{encoded_path}"
 
 
-def delete_report_photo(public_url):
-    base_url, _ = _configuration()
-    parsed_url = urlparse(public_url)
-    prefix = "/storage/v1/object/public/report-photos/"
-    base = urlparse(base_url)
-    if parsed_url.netloc != base.netloc or not parsed_url.path.startswith(prefix):
-        return
-    object_path = parsed_url.path[len(prefix):]
+def delete_report_photo(object_path):
     _request(
         f"storage/v1/object/report-photos/{quote(object_path, safe='/')}",
         method="DELETE",

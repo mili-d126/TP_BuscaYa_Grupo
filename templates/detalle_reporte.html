@@ -31,9 +31,9 @@
                 {% endwith %}
 
                 <div class="card shadow border-0 rounded-4 mb-4 overflow-hidden">
-                    {% if r['foto'] %}
-                        <img src="{{ r['foto'] }}" alt="{{ r['titulo'] }}" style="max-height: 360px; object-fit: cover; width: 100%;">
-                    {% endif %}
+                    {% for foto in r['fotos'] %}
+                        <img src="{{ foto }}" alt="{{ r['titulo'] }}" style="max-height: 360px; object-fit: cover; width: 100%;">
+                    {% endfor %}
                     <div class="card-body p-4">
                         <div class="mb-2">
                             <span class="badge {{ 'bg-danger' if r['tipo'] == 'perdido' else 'bg-success' }} px-3 py-2">{{ 'Perdido' if r['tipo'] == 'perdido' else 'Encontrado' }}</span>
